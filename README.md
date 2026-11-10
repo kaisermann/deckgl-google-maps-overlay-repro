@@ -1,33 +1,24 @@
-# GoogleMapsOverlay lifecycle reproduction
+# GoogleMapsOverlay: finalize during initialization
 
-The real, unpatched `@deck.gl/google-maps` 9.4.1 adapter can recreate Google overlays after `finalize()` when an initialization callback runs late. This repository isolates that sequence without a Google API key, browser, framework or GPU.
-
-Requires Node.js 22+ and npm:
+A small browser example using the real Google Maps SDK, `GoogleMapsOverlay` and `ScatterplotLayer`. The lifecycle is in [main.js](main.js): create a map, attach the overlay, then call `finalize()` immediately. There are no mocks, captured callbacks, forced events or adapter patches.
 
 ```sh
 npm ci --ignore-scripts
 npm start
 ```
 
-`npm start` intentionally exits **1** with:
+Open [localhost:3000](http://localhost:3000). Requires Node.js 22.12+ and a Google Maps browser API key with Maps JavaScript API enabled and this referrer allowed. Enter the key in the page; the demo sends it to Google without saving it. No key belongs in this repository.
 
-```text
-TypeError: Cannot read properties of null (reading 'addListener')
-    at createDeckInstance (.../@deck.gl/google-maps/dist/index.cjs:75:37)
-    at GoogleMapsOverlay._onAddVectorOverlay (.../@deck.gl/google-maps/dist/index.cjs:396:20)
-```
+1. Leave **Finalize immediately** checked and click **Run**.
+2. Read the initial rendering type and subsequent SDK events in the log; check the browser console for errors.
+3. Reload, uncheck **Finalize immediately**, and run again. This control should show a red dot and log `Deck loaded; finalized=false`.
 
-`npm run control` delivers the same initialization callbacks while the adapter stays attached; it exits **0** and creates one Deck. `npm test` checks both results and exits **0** only when the expected failure and successful control reproduce.
+Expected: after finalization, a later rendering-type event must not create another Deck or register listeners on a null map.
 
-The sequence in [repro.cjs](repro.cjs) is:
+On the affected path, a map starts as `UNINITIALIZED`, the overlay is finalized, then Google resolves the rendering type. The published 9.4.1 adapter still has an initialization listener, which can recreate its Google overlays and throw `Cannot read properties of null (reading 'addListener')` from `createDeckInstance`.
 
-1. Attach the adapter to a map reporting `UNINITIALIZED`.
-2. Capture the registered `renderingtype_changed` callback.
-3. Call `finalize()`.
-4. Report `VECTOR`, run the captured callback, then deliver the pending overlay `onAdd` callbacks.
+If the log says the map was already initialized, this load did **not** exercise that path. Try Chrome DevTools with **Disable cache** and network throttling before reloading. Throttling may expose the initialization window; it is not guaranteed to do so. The page does not manufacture that ordering.
 
-Expected: no overlay or Deck is created after finalization. Actual: the callback creates Google overlays, and their `onAdd` passes a null map to `createDeckInstance`, which attempts `map.addListener`.
+Versions: Deck.gl 9.4.1, Google Maps weekly channel (the page logs the actual SDK version). [#10901](https://github.com/visgl/deck.gl/pull/10901) removes the initialization listener on detach; this example tests published 9.4.1, not that unreleased change. It does not demonstrate delivery of a callback after its listener is removed.
 
-The npm adapter and its helper functions are real. Only Deck's GPU-owning constructor is replaced; other core exports stay real. Google callbacks and the minimal DOM operations are controlled. The test deliberately invokes a captured callback after finalization, regardless of listener removal. It does **not** establish that the real Google SDK queues removed listeners this way, or how often that ordering occurs.
-
-Related: [#10901](https://github.com/visgl/deck.gl/pull/10901) removes the rendering-type listener when detaching. A callback already captured before that cleanup still needs to reject an old map. In its `_onRenderingTypeChanged(map)` path, that check must precede removal of current overlays and destruction of Deck. This small repository tests the published 9.4.1 adapter; it does not build that unreleased PR or compare patches.
+**Verification:** the build, local server, required-key validation and control checkbox were checked. A live run with an authorized Google Maps key has not been performed for this browser example. It is a reproduction attempt for the real timing window, not a claim that the error occurs on every load.

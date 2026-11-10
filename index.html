@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GoogleMapsOverlay finalization repro</title>
+    <style>
+      body { max-width: 900px; margin: auto; padding: 24px; font: 16px/1.5 system-ui; }
+      input, button { font: inherit; }
+      #key { box-sizing: border-box; width: 100%; padding: 8px; }
+      .option { display: flex; align-items: center; gap: 8px; margin-block: 16px; }
+      button { padding: 10px 20px; margin-block-end: 16px; }
+      #map { height: 400px; border: 1px solid #767676; }
+      pre { padding: 12px; background: #f3f3f3; white-space: pre-wrap; overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <h1>GoogleMapsOverlay finalization repro</h1>
+    <p>Create a Google map, attach an overlay, then finalize it immediately.</p>
+    <form method="post" action="/">
+      <label for="key">Google Maps browser API key (required)</label>
+      <input id="key" name="key" type="password" required autocomplete="off"
+        autocapitalize="none" spellcheck="false" aria-describedby="key-help">
+      <p id="key-help">The key is sent to Google and is not saved by this demo.</p>
+      <div class="option">
+        <input id="finalize" name="finalize" type="checkbox" checked>
+        <label for="finalize">Finalize immediately (uncheck for the attached control)</label>
+      </div>
+      <button type="submit">Run</button>
+    </form>
+    <p>Reload to run again. The log records the SDK's actual initialization order.</p>
+    <div id="map" role="region" aria-label="Google Map"></div>
+    <pre id="log" role="log" aria-live="polite">Waiting to run.
+</pre>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
