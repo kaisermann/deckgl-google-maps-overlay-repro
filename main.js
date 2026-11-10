@@ -33,7 +33,7 @@ form.addEventListener('submit', async event => {
     log(`Google Maps ${google.maps.version}; deck.gl 9.4.1`);
     const map = new google.maps.Map(document.querySelector('#map'), {
       center: {lat: 51.47, lng: 0.45}, zoom: 12,
-      mapId: 'DEMO_MAP_ID', renderingType: google.maps.RenderingType.VECTOR
+      mapId: 'DEMO_MAP_ID'
     });
     const initialType = map.getRenderingType();
     log(`Initial rendering type: ${initialType}`);
