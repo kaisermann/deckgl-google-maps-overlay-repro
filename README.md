@@ -37,3 +37,12 @@ Deck loaded; finalized=true
 ```
 
 With **Finalize immediately** unchecked, the same initialization sequence showed the red dot and logged `Deck loaded; finalized=false` without the null-map error. The build, local server and required-key validation also passed. This verifies the `UNINITIALIZED` → `RASTER` path; it does not establish that every SDK version, browser or load reproduces it.
+
+**Merged-fix comparison, 10 November 2026:** [#10901](https://github.com/visgl/deck.gl/pull/10901) fixes this repro. I ran the same page and SDK with the unmodified adapter and helper from [`9.4-release@47f3b5e1`](https://github.com/visgl/deck.gl/tree/47f3b5e121e3e110b94c246e35398d95e0833e32/modules/google-maps/src), using a temporary Vite alias and keeping core/layers 9.4.1. I compared both files with merge commit [`d655927f`](https://github.com/visgl/deck.gl/commit/d655927fe92a45d014d4a355fd91512167ca650b): only three luma import paths and two math.gl `subtract`/`sub` method names differ; the lifecycle code matches.
+
+| Adapter | Finalize before initialization | Attached control |
+| --- | --- | --- |
+| Published 9.4.1 | Null-map error; Deck loads after finalization | Red dot renders |
+| #10901 release backport | No error, no Deck canvas or `onLoad` after finalization | Red dot renders; no console errors |
+
+Both comparisons reached `UNINITIALIZED` then `RASTER`. Restoring the published adapter restored the error. This verifies the fix's release backport with the real SDK; it does not test the full master/luma 10 runtime or callback delivery after listener removal. This repro does not demonstrate a remaining issue beyond #10901.
