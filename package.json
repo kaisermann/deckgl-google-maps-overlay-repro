@@ -1,0 +1,14 @@
+{
+  "name": "deckgl-google-maps-overlay-repro",
+  "private": true,
+  "scripts": {
+    "start": "node repro.cjs",
+    "control": "node repro.cjs --keep-attached",
+    "test": "node check.cjs"
+  },
+  "engines": {"node": ">=22"},
+  "dependencies": {
+    "@deck.gl/core": "9.4.1",
+    "@deck.gl/google-maps": "9.4.1"
+  }
+}
